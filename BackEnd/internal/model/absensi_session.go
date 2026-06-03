@@ -12,6 +12,7 @@ type AbsensiSession struct {
 	Latitude    float64
 	Longitude   float64
 	RadiusMeter int
+	IsClosed    bool `gorm:"default:false"`
 	CreatedAt   time.Time
 }
 

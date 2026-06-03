@@ -34,6 +34,15 @@ func (s *AbsensiGuruService) Absen(guruID uint, lat, lon float64, fotoPath strin
 	if d > radius {
 		return errors.New("anda di luar area sekolah")
 	}
+	sudahAbsen, err := s.repo.CekHariIni(guruID)
+
+	if err != nil {
+		return err
+	}
+
+	if sudahAbsen {
+		return errors.New("anda sudah melakukan absensi hari ini")
+	}
 
 	return s.repo.Create(&model.AbsensiGuru{
 		GuruID:     guruID,
@@ -43,4 +52,9 @@ func (s *AbsensiGuruService) Absen(guruID uint, lat, lon float64, fotoPath strin
 		Latitude:   lat,
 		Longitude:  lon,
 	})
+
+}
+
+func (s *AbsensiGuruService) CekHariIni(guruID uint) (bool, error) {
+	return s.repo.CekHariIni(guruID)
 }

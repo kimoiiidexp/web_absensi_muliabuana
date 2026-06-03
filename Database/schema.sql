@@ -4,7 +4,7 @@ CREATE TABLE users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin','guru','murid') NOT NULL,
+    role ENUM('admin','guru','siswa') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -64,6 +64,7 @@ CREATE TABLE absensi_session (
     latitude DECIMAL(10,8),
     longitude DECIMAL(11,8),
     radius_meter INT DEFAULT 50,
+    is_closed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (guru_id) REFERENCES users(id) ON DELETE CASCADE,

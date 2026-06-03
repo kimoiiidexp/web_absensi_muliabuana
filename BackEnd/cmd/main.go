@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
 )
 
@@ -24,6 +25,12 @@ func main() {
 	fmt.Println("DB_HOST:", os.Getenv("DB_HOST"))
 
 	app := fiber.New()
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:3000",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+		AllowMethods: "GET,POST,PUT,DELETE,PATCH",
+	}))
 
 	// connect DB
 	db := config.ConnectDB()
@@ -86,6 +93,13 @@ func main() {
 	absensiHandler := handler.NewAbsensiHandler(absensiService)
 
 	// =========================
+	// CATATAN SISWA
+	// =========================
+	catatanRepo := repository.NewCatatanSiswaRepo(db)
+	catatanService := service.NewCatatanSiswaService(catatanRepo)
+	catatanHandler := handler.NewCatatanSiswaHandler(catatanService)
+
+	// =========================
 	// ROUTES
 	// =========================
 	routes.SetupRoutes(
@@ -99,7 +113,8 @@ func main() {
 		absensiGuruHandler,
 		invHandler,
 		absensiHandler,
+		catatanHandler,
 	)
 
-	app.Listen(":3000")
+	app.Listen(":8080")
 }

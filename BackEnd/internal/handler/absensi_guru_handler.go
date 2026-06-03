@@ -44,8 +44,28 @@ func (h *AbsensiGuruHandler) Absen(c *fiber.Ctx) error {
 
 	err = h.service.Absen(guruID, lat, lon, path)
 	if err != nil {
-		return c.Status(403).JSON(err.Error())
+		return c.Status(403).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
-	return c.JSON("absen guru berhasil")
+	return c.JSON(fiber.Map{
+		"message": "absen guru berhasil",
+	})
+}
+
+func (h *AbsensiGuruHandler) CekAbsen(c *fiber.Ctx) error {
+
+	guruID := c.Locals("user_id").(uint)
+
+	sudah, err := h.service.CekHariIni(guruID)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": "server error",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"sudah_absen": sudah,
+	})
 }

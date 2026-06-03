@@ -6,10 +6,10 @@ import (
 )
 
 type SiswaKelasService struct {
-	repo repository.SiswaKelasRepository
+	repo repository.SiswaKelasRepo
 }
 
-func NewSiswaKelasService(r repository.SiswaKelasRepository) *SiswaKelasService {
+func NewSiswaKelasService(r repository.SiswaKelasRepo) *SiswaKelasService {
 	return &SiswaKelasService{r}
 }
 
@@ -18,4 +18,8 @@ func (s *SiswaKelasService) Assign(siswaID, kelasID uint) error {
 		SiswaID: siswaID,
 		KelasID: kelasID,
 	})
+}
+
+func (s *SiswaKelasService) GetByKelas(kelasID uint) ([]repository.SiswaWithUser, error) {
+	return s.repo.GetByKelasWithUser(kelasID)
 }

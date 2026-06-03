@@ -73,7 +73,9 @@ func (h *AbsensiHandler) GenerateAlpa(c *fiber.Ctx) error {
 
 	sessionID, _ := strconv.Atoi(c.Params("id"))
 
-	err := h.service.GenerateAlpa(uint(sessionID))
+	userID := c.Locals("user_id").(uint) // 🔥 ambil dari JWT
+
+	err := h.service.GenerateAlpa(uint(sessionID), userID)
 	if err != nil {
 		return c.Status(500).JSON(err.Error())
 	}
@@ -85,7 +87,9 @@ func (h *AbsensiHandler) GetLaporan(c *fiber.Ctx) error {
 
 	sessionID, _ := strconv.Atoi(c.Params("id"))
 
-	data, err := h.service.GetLaporan(uint(sessionID))
+	userID := c.Locals("user_id").(uint)
+	data, err := h.service.GetLaporan(uint(sessionID), userID)
+
 	if err != nil {
 		return c.Status(500).JSON(err.Error())
 	}
@@ -110,12 +114,10 @@ func (h *AbsensiHandler) UpdateStatus(c *fiber.Ctx) error {
 	}
 
 	// 🔥 AMBIL ROLE DARI JWT
-	role, ok := c.Locals("role").(string)
-	if !ok {
-		return c.Status(401).JSON("unauthorized")
-	}
+	userID := c.Locals("user_id").(uint)
 
-	err := h.service.UpdateStatus(role, absensiID, body.Status)
+	err := h.service.UpdateStatus(userID, absensiID, body.Status)
+
 	if err != nil {
 		return c.Status(400).JSON(err.Error())
 	}
@@ -124,9 +126,15 @@ func (h *AbsensiHandler) UpdateStatus(c *fiber.Ctx) error {
 }
 
 func (h *AbsensiHandler) GetSummary(c *fiber.Ctx) error {
-	sessionID, _ := strconv.Atoi(c.Params("id"))
 
-	data, err := h.service.GetSummary(uint(sessionID))
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(400).JSON("invalid id")
+	}
+
+	userID := c.Locals("user_id").(uint)
+
+	data, err := h.service.GetSummary(uint(id), userID)
 	if err != nil {
 		return c.Status(500).JSON(err.Error())
 	}

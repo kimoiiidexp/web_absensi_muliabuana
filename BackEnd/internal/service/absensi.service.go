@@ -30,7 +30,7 @@ func (s *AbsensiService) CreateSession(guruID, kelasID, mapelID uint, lat, lon f
 		KelasID:     kelasID,
 		MapelID:     mapelID,
 		QRToken:     token,
-		ExpiredAt:   time.Now().Add(15 * time.Minute),
+		ExpiredAt:   time.Now().Add(1 * time.Minute),
 		Latitude:    lat,
 		Longitude:   lon,
 		RadiusMeter: 100,
@@ -82,6 +82,10 @@ func (s *AbsensiService) AbsenSiswa(token string, siswaID uint, lat, lon float64
 		return errors.New("anda di luar area")
 	}
 
+	if session.IsClosed {
+		return errors.New("session sudah ditutup")
+	}
+
 	// ✅ SIMPAN ABSENSI
 	return s.repo.CreateAbsensi(&model.AbsensiSiswa{
 		SessionID:  session.ID,
@@ -94,14 +98,23 @@ func (s *AbsensiService) AbsenSiswa(token string, siswaID uint, lat, lon float64
 // =========================
 // AUTO GENERATE ALPA
 // =========================
-func (s *AbsensiService) GenerateAlpa(sessionID uint) error {
+func (s *AbsensiService) GenerateAlpa(sessionID uint, userID uint) error {
+
+	if err := s.validateGuruOwner(sessionID, userID); err != nil {
+		return err
+	}
 
 	session, err := s.repo.GetSessionByID(sessionID)
 	if err != nil {
 		return err
 	}
 
-	// 🔥 VALIDASI
+	// 🔥 CEK SUDAH DITUTUP
+	if session.IsClosed {
+		return errors.New("session sudah ditutup")
+	}
+
+	// 🔥 CEK BELUM EXPIRED
 	if time.Now().Before(session.ExpiredAt) {
 		return errors.New("absensi masih berlangsung")
 	}
@@ -145,27 +158,51 @@ func (s *AbsensiService) GenerateAlpa(sessionID uint) error {
 		}
 	}
 
-	return nil
+	// 🔥 LOCK SESSION
+	session.IsClosed = true
+	return s.repo.UpdateSession(session)
 }
 
 // =========================
 // LAPORAN
 // =========================
-func (s *AbsensiService) GetLaporan(sessionID uint) ([]model.AbsensiSiswa, error) {
-	return s.repo.GetAbsensiBySession(sessionID)
+func (s *AbsensiService) GetLaporan(sessionID uint, userID uint) ([]model.LaporanResponse, error) {
+
+	if err := s.validateGuruOwner(sessionID, userID); err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetLaporanDetail(sessionID)
 }
 
 // =========================
 // UPDATE STATUS (GURU ONLY)
 // =========================
-func (s *AbsensiService) UpdateStatus(userRole string, absensiID uint, status string) error {
+func (s *AbsensiService) UpdateStatus(userID uint, absensiID uint, status string) error {
 
-	// 🔥 proteksi role
-	if userRole != "guru" {
-		return errors.New("akses ditolak")
+	// 🔥 ambil absensi dulu
+	absensi, err := s.repo.GetAbsensiByID(absensiID)
+	if err != nil {
+		return errors.New("data absensi tidak ditemukan")
 	}
 
-	// validasi status
+	// 🔥 ambil session
+	session, err := s.repo.GetSessionByID(absensi.SessionID)
+	if err != nil {
+		return err
+	}
+
+	// 🔒 VALIDASI OWNER
+	if session.GuruID != userID {
+		return errors.New("akses ditolak (bukan session anda)")
+	}
+
+	// 🔒 LOCK CHECK
+	if session.IsClosed {
+		return errors.New("session sudah ditutup")
+	}
+
+	// ✅ VALIDASI STATUS
 	validStatus := map[string]bool{
 		"hadir": true,
 		"alpa":  true,
@@ -177,7 +214,6 @@ func (s *AbsensiService) UpdateStatus(userRole string, absensiID uint, status st
 		return errors.New("status tidak valid")
 	}
 
-	// 🔥 optional rule (biar realistis)
 	if status == "hadir" {
 		return errors.New("tidak bisa ubah ke hadir")
 	}
@@ -185,6 +221,64 @@ func (s *AbsensiService) UpdateStatus(userRole string, absensiID uint, status st
 	return s.repo.UpdateStatus(absensiID, status)
 }
 
-func (s *AbsensiService) GetSummary(sessionID uint) (map[string]int64, error) {
-	return s.repo.GetSummary(sessionID)
+func (s *AbsensiService) GetSummary(sessionID uint, userID uint) (map[string]int, error) {
+
+	if err := s.validateGuruOwner(sessionID, userID); err != nil {
+		return nil, err
+	}
+
+	session, err := s.repo.GetSessionByID(sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 🔥 AUTO GENERATE (INI YANG KAMU BELUM ADA)
+	if time.Now().After(session.ExpiredAt) && !session.IsClosed {
+		err := s.GenerateAlpa(sessionID, userID)
+		if err != nil {
+			return nil, err
+		}
+
+		// reload session (karena sudah di-update)
+		session, _ = s.repo.GetSessionByID(sessionID)
+	}
+
+	// total siswa
+	students, err := s.repo.GetSiswaByKelas(session.KelasID)
+	if err != nil {
+		return nil, err
+	}
+
+	// absensi (SETELAH generate)
+	absens, err := s.repo.GetAbsensiBySession(sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := map[string]int{
+		"total_siswa": len(students),
+		"hadir":       0,
+		"alpa":        0,
+		"izin":        0,
+		"sakit":       0,
+	}
+
+	for _, a := range absens {
+		result[a.Status]++
+	}
+
+	return result, nil
+}
+
+func (s *AbsensiService) validateGuruOwner(sessionID uint, userID uint) error {
+	session, err := s.repo.GetSessionByID(sessionID)
+	if err != nil {
+		return err
+	}
+
+	if session.GuruID != userID {
+		return errors.New("akses ditolak (bukan session anda)")
+	}
+
+	return nil
 }

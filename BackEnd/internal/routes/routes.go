@@ -18,6 +18,7 @@ func SetupRoutes(
 	absensiGuruHandler *handler.AbsensiGuruHandler,
 	invitationHandler *handler.InvitationHandler,
 	absensiHandler *handler.AbsensiHandler,
+	catatanHandler *handler.CatatanSiswaHandler,
 ) {
 
 	// ========================
@@ -30,6 +31,9 @@ func SetupRoutes(
 	// PROTECTED
 	// ========================
 	api := app.Group("/api", middleware.AuthMiddleware())
+	api.Get("/profile", auth.GetProfile)
+	api.Put("/profile/phone", auth.UpdatePhone)
+	api.Patch("/profile/phone", auth.UpdatePhone)
 
 	// ========================
 	// ROLE: GURU
@@ -41,6 +45,7 @@ func SetupRoutes(
 	})
 
 	guru.Get("/mapel-kelas", guruMapelKelasHandler.GetMy)
+	guru.Get("/students", siswaKelasHandler.GetByKelas) // Get students by class for teacher
 
 	// ========================
 	// ROLE: ADMIN
@@ -68,6 +73,7 @@ func SetupRoutes(
 	guru.Get("/mapel-kelas", guruMapelKelasHandler.GetMy)
 
 	guru.Post("/absen", absensiGuruHandler.Absen)
+	guru.Get("/cek-absen", absensiGuruHandler.CekAbsen)
 
 	// ADMIN ONLY
 	admin.Post("/invite-guru", invitationHandler.Invite)
@@ -82,6 +88,10 @@ func SetupRoutes(
 	guru.Get("/session/:id/laporan", absensiHandler.GetLaporan)
 	guru.Patch("/absensi/:id", absensiHandler.UpdateStatus)
 	guru.Get("/session/:id/summary", absensiHandler.GetSummary)
+	
+	// GURU - CATATAN SISWA
+	guru.Post("/catatan", catatanHandler.SaveCatatan)
+	guru.Get("/catatan", catatanHandler.GetCatatan)
 
 	// MURID
 	siswa := api.Group("/siswa", middleware.RoleMiddleware("siswa"))

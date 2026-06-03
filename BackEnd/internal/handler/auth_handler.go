@@ -57,3 +57,60 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		"user":  user,
 	})
 }
+
+func (h *AuthHandler) UpdatePhone(c *fiber.Ctx) error {
+	type req struct {
+		Phone string `json:"phone"`
+	}
+
+	var body req
+
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "invalid request",
+		})
+	}
+
+	// FIX USER ID
+	userID := c.Locals("userID")
+
+	id, ok := userID.(uint)
+	if !ok {
+		return c.Status(401).JSON(fiber.Map{
+			"message": "invalid user id",
+		})
+	}
+
+	err := h.service.UpdatePhone(id, body.Phone)
+
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "phone updated",
+	})
+}
+
+func (h *AuthHandler) GetProfile(c *fiber.Ctx) error {
+
+	userIDInterface := c.Locals("user_id")
+
+	if userIDInterface == nil {
+		return c.Status(401).JSON(fiber.Map{
+			"message": "unauthorized",
+		})
+	}
+
+	userID := userIDInterface.(uint)
+
+	user, err := h.service.GetProfile(userID)
+
+	if err != nil {
+		return c.Status(500).JSON(err.Error())
+	}
+
+	return c.JSON(user)
+}

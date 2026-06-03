@@ -24,3 +24,7 @@ func (s *GuruMapelKelasService) Assign(guruID, kelasID, mapelID uint) error {
 func (s *GuruMapelKelasService) GetByGuru(guruID uint) ([]model.GuruMapelKelas, error) {
 	return s.repo.FindByGuru(guruID)
 }
+
+func (s *GuruMapelKelasService) GetByGuruWithDetails(guruID uint) ([]repository.GuruMapelKelasDetail, error) {
+	return s.repo.FindByGuruWithDetails(guruID)
+}

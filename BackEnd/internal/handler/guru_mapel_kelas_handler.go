@@ -38,7 +38,7 @@ func (h *GuruMapelKelasHandler) Assign(c *fiber.Ctx) error {
 func (h *GuruMapelKelasHandler) GetMy(c *fiber.Ctx) error {
 	guruID := c.Locals("user_id").(uint)
 
-	data, err := h.service.GetByGuru(guruID)
+	data, err := h.service.GetByGuruWithDetails(guruID)
 	if err != nil {
 		return c.Status(500).JSON(err.Error())
 	}

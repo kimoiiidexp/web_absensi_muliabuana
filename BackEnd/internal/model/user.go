@@ -9,5 +9,6 @@ type User struct {
 	Password  string
 	Role      string
 	CreatedAt time.Time
-	UpdatedAt time.Time
+	UpdatedAt time.Time	
+	Phone string `json:"phone"`
 }

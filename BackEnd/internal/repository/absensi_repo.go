@@ -17,6 +17,9 @@ type AbsensiRepo interface {
 	UpdateStatus(absensiID uint, status string) error
 	GetSummary(sessionID uint) (map[string]int64, error)
 	IsSiswaInKelas(kelasID, siswaID uint) (bool, error)
+	UpdateSession(data *model.AbsensiSession) error
+	GetAbsensiByID(id uint) (*model.AbsensiSiswa, error)
+	GetLaporanDetail(sessionID uint) ([]model.LaporanResponse, error)
 }
 
 type absensiRepo struct {
@@ -133,4 +136,40 @@ func (r *absensiRepo) IsSiswaInKelas(kelasID, siswaID uint) (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+func (r *absensiRepo) UpdateSession(data *model.AbsensiSession) error {
+	return r.db.Save(data).Error
+}
+
+func (r *absensiRepo) GetAbsensiByID(id uint) (*model.AbsensiSiswa, error) {
+	var data model.AbsensiSiswa
+
+	err := r.db.First(&data, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &data, nil
+}
+
+func (r *absensiRepo) GetLaporanDetail(sessionID uint) ([]model.LaporanResponse, error) {
+
+	var results []model.LaporanResponse
+
+	err := r.db.Table("absensi_siswa").
+		Select(`
+			absensi_siswa.id,
+			absensi_siswa.session_id,
+			absensi_siswa.siswa_id,
+			users.name as nama,
+			absensi_siswa.waktu_absen,
+			absensi_siswa.status
+		`).
+		Joins("JOIN users ON users.id = absensi_siswa.siswa_id").
+		Where("absensi_siswa.session_id = ?", sessionID).
+		Order("absensi_siswa.waktu_absen ASC").
+		Scan(&results).Error
+
+	return results, err
 }

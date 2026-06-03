@@ -34,10 +34,26 @@ func (s *AuthService) Login(email, password string) (*model.User, error) {
 		return nil, err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err = bcrypt.CompareHashAndPassword(
+		[]byte(user.Password),
+		[]byte(password),
+	)
+
 	if err != nil {
 		return nil, err
 	}
 
 	return user, nil
+}
+
+func (s *AuthService) UpdatePhone(
+	userID uint,
+	phone string,
+) error {
+
+	return s.repo.UpdatePhone(userID, phone)
+}
+
+func (s *AuthService) GetProfile(userID uint) (*model.User, error) {
+	return s.repo.FindByID(userID)
 }

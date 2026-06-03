@@ -14,11 +14,10 @@ import {
   ChevronDown,
   AlertCircle,
   CheckCircle,
-  Calendar,
   Camera,
-  FileText,
   Clock,
 } from "lucide-react";
+import { apiUrl } from "@/lib/api";
 
 // Types
 interface GuruMapelKelasDetail {
@@ -82,7 +81,7 @@ export default function RekapAbsensiPage() {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/api/guru/students?kelas_id=${kelasID}`,
+        apiUrl(`/api/guru/students?kelas_id=${kelasID}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -106,7 +105,7 @@ export default function RekapAbsensiPage() {
     
     try {
       const res = await fetch(
-        `http://localhost:8080/api/guru/catatan?kelas_id=${kelasID}`,
+        apiUrl(`/api/guru/catatan?kelas_id=${kelasID}`),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -127,9 +126,7 @@ export default function RekapAbsensiPage() {
     }
   }, []);
 
-  const fetchAbsensi = useCallback(async (kelasID: string, tanggal: string) => {
-    const token = localStorage.getItem("token");
-    
+  const fetchAbsensi = useCallback(async () => {
     try {
       // Fetch from absensi_siswa table (need to create endpoint for this)
       // For now, we'll use mock data structure
@@ -152,7 +149,7 @@ export default function RekapAbsensiPage() {
       }
 
       try {
-        const res = await fetch("http://localhost:8080/api/guru/mapel-kelas", {
+        const res = await fetch(apiUrl("/api/guru/mapel-kelas"), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -173,10 +170,11 @@ export default function RekapAbsensiPage() {
   // Fetch students when kelas is selected
   useEffect(() => {
     if (selectedKelas) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchStudents(selectedKelas);
       fetchCatatan(selectedKelas);
       if (selectedTanggal) {
-        fetchAbsensi(selectedKelas, selectedTanggal);
+        fetchAbsensi();
       }
     }
   }, [selectedKelas, selectedTanggal, fetchStudents, fetchCatatan, fetchAbsensi]);
@@ -211,7 +209,7 @@ export default function RekapAbsensiPage() {
     const token = localStorage.getItem("token");
     
     try {
-      const res = await fetch("http://localhost:8080/api/guru/catatan", {
+      const res = await fetch(apiUrl("/api/guru/catatan"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

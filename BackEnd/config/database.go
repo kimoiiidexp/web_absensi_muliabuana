@@ -11,11 +11,11 @@ import (
 
 func ConnectDB() *gorm.DB {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASS"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
+		env("DB_USER", "MYSQLUSER"),
+		env("DB_PASS", "DB_PASSWORD", "MYSQLPASSWORD"),
+		env("DB_HOST", "MYSQLHOST"),
+		env("DB_PORT", "MYSQLPORT"),
+		env("DB_NAME", "MYSQLDATABASE"),
 	)
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
@@ -24,4 +24,14 @@ func ConnectDB() *gorm.DB {
 	}
 
 	return db
+}
+
+func env(keys ...string) string {
+	for _, key := range keys {
+		if value := os.Getenv(key); value != "" {
+			return value
+		}
+	}
+
+	return ""
 }

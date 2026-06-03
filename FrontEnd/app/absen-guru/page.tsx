@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { apiUrl } from "@/lib/api";
 
 export default function AbsenGuruPage() {
   const router = useRouter();
@@ -31,8 +32,6 @@ export default function AbsenGuruPage() {
 
   const [koordinat, setKoordinat] = useState("");
 
-  const [sudahAbsen, setSudahAbsen] = useState(false);
-
   // =========================
   // FIX HYDRATION
   // =========================
@@ -41,6 +40,7 @@ export default function AbsenGuruPage() {
 
   useEffect(() => {
     const localName = localStorage.getItem("name") || "Guru";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setName(localName);
   }, []);
 
@@ -52,7 +52,7 @@ export default function AbsenGuruPage() {
       try {
         const token = localStorage.getItem("token");
 
-        const res = await fetch("http://localhost:8080/api/guru/cek-absen", {
+        const res = await fetch(apiUrl("/api/guru/cek-absen"), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -61,7 +61,6 @@ export default function AbsenGuruPage() {
         const data = await res.json();
 
         if (res.ok && data.sudah_absen) {
-          setSudahAbsen(true);
           setStatus("already");
         }
       } catch (err) {
@@ -200,7 +199,7 @@ export default function AbsenGuruPage() {
 
           const token = localStorage.getItem("token");
 
-          const res = await fetch("http://localhost:8080/api/guru/absen", {
+          const res = await fetch(apiUrl("/api/guru/absen"), {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,

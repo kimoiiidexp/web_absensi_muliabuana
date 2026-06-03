@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -16,21 +17,30 @@ import (
 )
 
 func main() {
-	// load env
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Gagal load .env")
+	if err := godotenv.Load(); err != nil {
+		log.Println(".env tidak ditemukan, lanjut memakai environment hosting")
 	}
 
 	fmt.Println("DB_HOST:", os.Getenv("DB_HOST"))
 
 	app := fiber.New()
 
+	allowOrigins := os.Getenv("CORS_ALLOW_ORIGINS")
+	if strings.TrimSpace(allowOrigins) == "" {
+		allowOrigins = "http://localhost:3000"
+	}
+
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3000",
+		AllowOrigins: allowOrigins,
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 		AllowMethods: "GET,POST,PUT,DELETE,PATCH",
 	}))
+
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status": "ok",
+		})
+	})
 
 	// connect DB
 	db := config.ConnectDB()
@@ -116,5 +126,10 @@ func main() {
 		catatanHandler,
 	)
 
-	app.Listen(":8080")
+	port := os.Getenv("PORT")
+	if strings.TrimSpace(port) == "" {
+		port = "8080"
+	}
+
+	log.Fatal(app.Listen(":" + port))
 }

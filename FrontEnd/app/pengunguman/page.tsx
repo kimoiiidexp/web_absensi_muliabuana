@@ -1,11 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import {
   ArrowLeft,
   Bell,
-  Menu,
 } from "lucide-react";
 
 export default function PengungumanPage() {
@@ -154,9 +154,11 @@ export default function PengungumanPage() {
             "
           >
 
-            <img
+            <Image
               src="https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1200&auto=format&fit=crop"
-              alt="school"
+              alt="Suasana sekolah"
+              width={1200}
+              height={500}
               className="
                 w-full
                 h-[500px]

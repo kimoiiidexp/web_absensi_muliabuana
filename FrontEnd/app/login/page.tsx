@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { apiUrl } from "@/lib/api";
 import { useRouter } from "next/navigation"; // 🔥 TAMBAH INI
 
 export default function LoginPage() {
@@ -11,7 +12,7 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     try {
-      const res = await fetch("http://localhost:8080/login", {
+      const res = await fetch(apiUrl("/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

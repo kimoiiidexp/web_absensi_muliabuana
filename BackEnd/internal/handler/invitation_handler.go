@@ -2,6 +2,8 @@ package handler
 
 import (
 	"WebAbsensiMuliaBuana/BackEnd/internal/service"
+	"os"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -30,7 +32,12 @@ func (h *InvitationHandler) Invite(c *fiber.Ctx) error {
 		return c.Status(500).JSON(err.Error())
 	}
 
-	link := "http://localhost:3000/register-guru?token=" + inv.Token
+	frontendURL := strings.TrimRight(os.Getenv("FRONTEND_URL"), "/")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000"
+	}
+
+	link := frontendURL + "/register-guru?token=" + inv.Token
 
 	return c.JSON(fiber.Map{
 		"message": "invite berhasil",

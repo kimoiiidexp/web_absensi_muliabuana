@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiUrl } from "@/lib/api";
 
 import {
   ArrowLeft,
@@ -44,13 +45,13 @@ const [loading, setLoading] = useState(true);
       ? localStorage.getItem("name") || "User"
       : "User";
 
-useState(() => {
+useEffect(() => {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        "http://localhost:8080/api/profile",
+        apiUrl("/api/profile"),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -73,14 +74,14 @@ useState(() => {
   };
 
   fetchProfile();
-});
+}, []);
   
   const savePhone = async () => {
   try {
     const token = localStorage.getItem("token");
 
     const res = await fetch(
-      "http://localhost:8080/api/profile/phone",
+      apiUrl("/api/profile/phone"),
       {
         method: "PUT",
         headers: {

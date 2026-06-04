@@ -30,7 +30,7 @@ CORS_ALLOW_ORIGINS=https://url-frontend-railway.up.railway.app
 FRONTEND_URL=https://url-frontend-railway.up.railway.app
 ```
 
-Database MySQL Railway akan menyediakan variable berikut:
+Database MySQL Railway akan menyediakan variable berikut, tetapi variable ini harus tersedia juga di service backend:
 
 ```env
 MYSQLHOST
@@ -38,6 +38,12 @@ MYSQLPORT
 MYSQLUSER
 MYSQLPASSWORD
 MYSQLDATABASE
+```
+
+Jika tab `Variables` di service backend masih `0 Variables`, backend belum bisa konek database walaupun database sudah bisa dibuka lewat TablePlus. Tambahkan variable MySQL ke service backend, atau tambahkan satu variable URL:
+
+```env
+MYSQL_URL=mysql://user:password@host:port/database
 ```
 
 Pastikan variable MySQL tersebut tersedia di service backend. Jika belum otomatis tersedia, tambahkan sebagai reference dari service MySQL Railway.

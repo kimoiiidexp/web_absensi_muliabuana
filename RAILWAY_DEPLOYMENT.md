@@ -17,8 +17,10 @@ Project ini sebaiknya dibuat menjadi 3 service dalam 1 Railway project:
 Tambahkan service baru dari repo yang sama, lalu atur:
 
 - Root Directory: `/`
-- Build Command: `go build -o server ./BackEnd/cmd/main.go`
-- Start Command: `./server`
+- Build Command: `go build -ldflags="-w -s" -o out ./BackEnd/cmd`
+- Start Command: `./out`
+
+Catatan: backend harus memakai root directory `/` karena file `go.mod` ada di root repository. Jika root directory diarahkan ke `BackEnd`, Railway bisa gagal membaca module Go.
 
 Variables untuk backend:
 
@@ -79,6 +81,8 @@ Tambahkan service baru dari repo yang sama, lalu atur:
 - Build Command: `npm ci && npm run build`
 - Start Command: `npm start`
 
+Service frontend boleh memakai root directory `FrontEnd` karena `package.json` dan `railway.json` frontend ada di folder tersebut.
+
 Variables untuk frontend:
 
 ```env
@@ -108,3 +112,14 @@ Redeploy backend setelah variable berubah.
    - `CORS_ALLOW_ORIGINS` di backend
    - variable MySQL di backend
    - data user di database
+
+## 7. Penyebab Error `no Go files in /app`
+
+Error ini muncul ketika Railway menjalankan build Go default dari root `/app`, tetapi sebelumnya root repository tidak punya file Go langsung.
+
+Project ini sekarang punya:
+
+- `main.go` di root supaya build default Railway dari `/app` tetap jalan
+- `railway.json` di root untuk service backend
+- `FrontEnd/railway.json` untuk service frontend
+- `BackEnd/railway.json` sebagai cadangan jika konfigurasi Railway diarahkan dari folder backend

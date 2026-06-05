@@ -12,6 +12,8 @@ type AbsensiRepo interface {
 	CreateAbsensi(data *model.AbsensiSiswa) error
 	CheckAlreadyAbsen(sessionID, siswaID uint) (bool, error)
 	GetSessionByID(id uint) (*model.AbsensiSession, error)
+	IsGuruAssigned(guruID, kelasID, mapelID uint) (bool, error)
+	GetSessionsByGuru(guruID uint) ([]SessionDetail, error)
 	GetSiswaByKelas(kelasID uint) ([]model.SiswaKelas, error)
 	GetAbsensiBySession(sessionID uint) ([]model.AbsensiSiswa, error)
 	UpdateStatus(absensiID uint, status string) error
@@ -20,10 +22,39 @@ type AbsensiRepo interface {
 	UpdateSession(data *model.AbsensiSession) error
 	GetAbsensiByID(id uint) (*model.AbsensiSiswa, error)
 	GetLaporanDetail(sessionID uint) ([]model.LaporanResponse, error)
+	GetRiwayatBySiswa(siswaID uint) ([]RiwayatSiswa, error)
 }
 
 type absensiRepo struct {
 	db *gorm.DB
+}
+
+type SessionDetail struct {
+	ID          uint    `json:"id"`
+	GuruID      uint    `json:"guru_id"`
+	KelasID     uint    `json:"kelas_id"`
+	MapelID     uint    `json:"mapel_id"`
+	KelasName   string  `json:"kelas_name"`
+	JurusanName string  `json:"jurusan_name"`
+	MapelName   string  `json:"mapel_name"`
+	QRToken     string  `json:"qr_token"`
+	ExpiredAt   string  `json:"expired_at"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
+	RadiusMeter int     `json:"radius_meter"`
+	IsClosed    bool    `json:"is_closed"`
+	CreatedAt   string  `json:"created_at"`
+}
+
+type RiwayatSiswa struct {
+	ID        uint   `json:"id"`
+	SessionID uint   `json:"session_id"`
+	Date      string `json:"date"`
+	Time      string `json:"time"`
+	Status    string `json:"status"`
+	Subject   string `json:"subject"`
+	Class     string `json:"class"`
+	GuruName  string `json:"guru_name"`
 }
 
 func NewAbsensiRepo(db *gorm.DB) AbsensiRepo {
@@ -66,6 +97,46 @@ func (r *absensiRepo) GetSessionByID(id uint) (*model.AbsensiSession, error) {
 	}
 
 	return &session, nil
+}
+
+func (r *absensiRepo) IsGuruAssigned(guruID, kelasID, mapelID uint) (bool, error) {
+	var count int64
+	err := r.db.Table("guru_mapel_kelas").
+		Where("guru_id = ? AND kelas_id = ? AND mapel_id = ?", guruID, kelasID, mapelID).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *absensiRepo) GetSessionsByGuru(guruID uint) ([]SessionDetail, error) {
+	var result []SessionDetail
+	err := r.db.Table("absensi_session s").
+		Select(`
+			s.id,
+			s.guru_id,
+			s.kelas_id,
+			s.mapel_id,
+			k.name as kelas_name,
+			j.name as jurusan_name,
+			mp.name as mapel_name,
+			s.qr_token,
+			DATE_FORMAT(s.expired_at, '%Y-%m-%dT%H:%i:%sZ') as expired_at,
+			s.latitude,
+			s.longitude,
+			s.radius_meter,
+			s.is_closed,
+			DATE_FORMAT(s.created_at, '%Y-%m-%dT%H:%i:%sZ') as created_at
+		`).
+		Joins("JOIN kelas k ON k.id = s.kelas_id").
+		Joins("LEFT JOIN jurusan j ON j.id = k.jurusan_id").
+		Joins("JOIN mata_pelajaran mp ON mp.id = s.mapel_id").
+		Where("s.guru_id = ?", guruID).
+		Order("s.created_at DESC").
+		Limit(20).
+		Scan(&result).Error
+	return result, err
 }
 
 func (r *absensiRepo) GetSiswaByKelas(kelasID uint) ([]model.SiswaKelas, error) {
@@ -172,4 +243,27 @@ func (r *absensiRepo) GetLaporanDetail(sessionID uint) ([]model.LaporanResponse,
 		Scan(&results).Error
 
 	return results, err
+}
+
+func (r *absensiRepo) GetRiwayatBySiswa(siswaID uint) ([]RiwayatSiswa, error) {
+	var result []RiwayatSiswa
+	err := r.db.Table("absensi_siswa a").
+		Select(`
+			a.id,
+			a.session_id,
+			DATE_FORMAT(a.waktu_absen, '%d/%m/%Y') as date,
+			DATE_FORMAT(a.waktu_absen, '%H:%i') as time,
+			a.status,
+			mp.name as subject,
+			k.name as class,
+			g.name as guru_name
+		`).
+		Joins("JOIN absensi_session s ON s.id = a.session_id").
+		Joins("JOIN mata_pelajaran mp ON mp.id = s.mapel_id").
+		Joins("JOIN kelas k ON k.id = s.kelas_id").
+		Joins("JOIN users g ON g.id = s.guru_id").
+		Where("a.siswa_id = ?", siswaID).
+		Order("a.waktu_absen DESC").
+		Scan(&result).Error
+	return result, err
 }

@@ -8,7 +8,7 @@ interface AbsenRecord {
   id: number;
   date: string;
   time: string;
-  status: "hadir" | "izin" | "alpa";
+  status: "hadir" | "terlambat" | "izin" | "sakit" | "alpa";
   subject: string;
   class: string;
   location?: string;
@@ -19,7 +19,7 @@ export default function RiwayatAbsenPage() {
   const [mounted, setMounted] = useState(false);
   const [records, setRecords] = useState<AbsenRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<"all" | "hadir" | "izin" | "alpa">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "hadir" | "terlambat" | "izin" | "sakit" | "alpa">("all");
 
   useEffect(() => {
     setMounted(true);
@@ -59,6 +59,10 @@ export default function RiwayatAbsenPage() {
         return "bg-green-100 text-green-700";
       case "izin":
         return "bg-yellow-100 text-yellow-700";
+      case "sakit":
+        return "bg-blue-100 text-blue-700";
+      case "terlambat":
+        return "bg-orange-100 text-orange-700";
       case "alpa":
         return "bg-red-100 text-red-700";
       default:
@@ -72,6 +76,10 @@ export default function RiwayatAbsenPage() {
         return "Hadir";
       case "izin":
         return "Izin";
+      case "sakit":
+        return "Sakit";
+      case "terlambat":
+        return "Terlambat";
       case "alpa":
         return "Alpa";
       default:
@@ -102,7 +110,7 @@ export default function RiwayatAbsenPage() {
 
       {/* FILTER */}
       <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
-        {["all", "hadir", "izin", "alpa"].map((status) => (
+        {["all", "hadir", "terlambat", "izin", "sakit", "alpa"].map((status) => (
           <button
             key={status}
             onClick={() => setFilterStatus(status as any)}

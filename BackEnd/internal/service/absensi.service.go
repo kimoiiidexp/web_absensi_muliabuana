@@ -22,6 +22,14 @@ func NewAbsensiService(r repository.AbsensiRepo) *AbsensiService {
 // GURU BUAT QR
 // =========================
 func (s *AbsensiService) CreateSession(guruID, kelasID, mapelID uint, lat, lon float64) (*model.AbsensiSession, error) {
+	isAssigned, err := s.repo.IsGuruAssigned(guruID, kelasID, mapelID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isAssigned {
+		return nil, errors.New("kelas atau mapel bukan milik guru ini")
+	}
 
 	token := uuid.NewString()
 
@@ -36,8 +44,12 @@ func (s *AbsensiService) CreateSession(guruID, kelasID, mapelID uint, lat, lon f
 		RadiusMeter: 100,
 	}
 
-	err := s.repo.CreateSession(session)
+	err = s.repo.CreateSession(session)
 	return session, err
+}
+
+func (s *AbsensiService) GetSessionsByGuru(guruID uint) ([]repository.SessionDetail, error) {
+	return s.repo.GetSessionsByGuru(guruID)
 }
 
 // =========================
@@ -173,6 +185,10 @@ func (s *AbsensiService) GetLaporan(sessionID uint, userID uint) ([]model.Lapora
 	}
 
 	return s.repo.GetLaporanDetail(sessionID)
+}
+
+func (s *AbsensiService) GetRiwayatSiswa(siswaID uint) ([]repository.RiwayatSiswa, error) {
+	return s.repo.GetRiwayatBySiswa(siswaID)
 }
 
 // =========================

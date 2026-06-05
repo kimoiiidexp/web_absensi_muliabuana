@@ -37,10 +37,21 @@ func (h *AbsensiHandler) CreateSession(c *fiber.Ctx) error {
 
 	session, err := h.service.CreateSession(guruID, body.KelasID, body.MapelID, body.Latitude, body.Longitude)
 	if err != nil {
-		return c.Status(500).JSON(err.Error())
+		return c.Status(400).JSON(err.Error())
 	}
 
 	return c.JSON(session)
+}
+
+func (h *AbsensiHandler) GetMySessions(c *fiber.Ctx) error {
+	guruID := c.Locals("user_id").(uint)
+
+	data, err := h.service.GetSessionsByGuru(guruID)
+	if err != nil {
+		return c.Status(500).JSON(err.Error())
+	}
+
+	return c.JSON(data)
 }
 
 // =========================
@@ -90,6 +101,17 @@ func (h *AbsensiHandler) GetLaporan(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uint)
 	data, err := h.service.GetLaporan(uint(sessionID), userID)
 
+	if err != nil {
+		return c.Status(500).JSON(err.Error())
+	}
+
+	return c.JSON(data)
+}
+
+func (h *AbsensiHandler) GetRiwayatSiswa(c *fiber.Ctx) error {
+	siswaID := c.Locals("user_id").(uint)
+
+	data, err := h.service.GetRiwayatSiswa(siswaID)
 	if err != nil {
 		return c.Status(500).JSON(err.Error())
 	}

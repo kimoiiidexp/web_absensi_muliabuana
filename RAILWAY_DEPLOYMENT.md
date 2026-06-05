@@ -89,6 +89,8 @@ Tambahkan service baru dari repo yang sama, lalu atur:
 
 Service frontend boleh memakai root directory `FrontEnd` karena `package.json` dan `railway.json` frontend ada di folder tersebut.
 
+Setelah deploy sukses, buka `Settings` -> `Networking` di service frontend, lalu klik `Generate Domain`. Jika service masih bertuliskan `Unexposed service`, frontend belum punya URL publik dan website belum bisa dibuka dari browser.
+
 Variables untuk frontend:
 
 ```env

@@ -399,13 +399,13 @@ export default function MyActivityPage() {
                 <ActionCard
                   title="Rekap Absen"
                   icon={<School size={34} />}
-                  link="/rekap-absensi-siswa"
+                  link="/rekap-absensi-guru"
                 />
 
                 <ActionCard
                   title="Riwayat"
                   icon={<History size={34} />}
-                  link="/riwayat"
+                  link="/riwayat-absen"
                 />
               </>
             )}

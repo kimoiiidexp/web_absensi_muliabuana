@@ -47,7 +47,7 @@ export default function AbsenMasukPage() {
               // Ignore decode errors
             },
             preferredCamera: "environment",
-            highlightCodeOutlineColor: "rgb(65, 135, 179)",
+            highlightScanRegion: true,
           }
         );
 

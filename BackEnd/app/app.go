@@ -8,6 +8,7 @@ import (
 	"WebAbsensiMuliaBuana/BackEnd/internal/service"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 
@@ -29,12 +30,21 @@ func Run() {
 	if strings.TrimSpace(allowOrigins) == "" {
 		allowOrigins = "http://localhost:3000"
 	}
+	allowOrigins = normalizeOrigins(allowOrigins)
 
 	fiberApp.Use(cors.New(cors.Config{
 		AllowOrigins: allowOrigins,
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 		AllowMethods: "GET,POST,PUT,DELETE,PATCH",
 	}))
+
+	fiberApp.Get("/", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"service": "web_absensi_muliabuana API",
+			"status":  "ok",
+			"health":  "/health",
+		})
+	})
 
 	fiberApp.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
@@ -104,4 +114,36 @@ func Run() {
 	}
 
 	log.Fatal(fiberApp.Listen(":" + port))
+}
+
+func normalizeOrigins(origins string) string {
+	parts := strings.Split(origins, ",")
+	normalized := make([]string, 0, len(parts))
+
+	for _, origin := range parts {
+		origin = strings.TrimSpace(origin)
+		if origin == "" {
+			continue
+		}
+		if origin == "*" {
+			normalized = append(normalized, origin)
+			continue
+		}
+		if !strings.Contains(origin, "://") {
+			origin = "https://" + origin
+		}
+		parsedOrigin, err := url.Parse(origin)
+		if err != nil || parsedOrigin.Scheme == "" || parsedOrigin.Host == "" {
+			log.Printf("CORS origin dilewati karena format tidak valid: %s", origin)
+			continue
+		}
+
+		normalized = append(normalized, parsedOrigin.Scheme+"://"+parsedOrigin.Host)
+	}
+
+	if len(normalized) == 0 {
+		return "http://localhost:3000"
+	}
+
+	return strings.Join(normalized, ",")
 }

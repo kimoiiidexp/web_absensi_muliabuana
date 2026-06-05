@@ -3,12 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Camera, AlertCircle, CheckCircle } from "lucide-react";
-import QrScanner from "qr-scanner";
 
 export default function AbsenKeluarPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [scanner, setScanner] = useState<QrScanner | null>(null);
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
@@ -17,6 +15,7 @@ export default function AbsenKeluarPage() {
   } | null>(null);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const scannerRef = useRef<any>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -32,27 +31,43 @@ export default function AbsenKeluarPage() {
   useEffect(() => {
     if (!mounted || !videoRef.current) return;
 
-    const qrScanner = new QrScanner(
-      videoRef.current,
-      async (result) => {
-        const token = result.data;
-        await handleAbsen(token);
-        qrScanner.stop();
-      },
-      {
-        onDecodeError: () => {
-          // Ignore decode errors
-        },
-        preferredCamera: "environment",
-        highlightCodeOutlineColor: "rgb(65, 135, 179)",
-      }
-    );
+    const initScanner = async () => {
+      try {
+        const QrScanner = (await import("qr-scanner")).default;
 
-    qrScanner.start();
-    setScanner(qrScanner);
+        const scanner = new QrScanner(
+          videoRef.current,
+          async (result: any) => {
+            const token = result.data;
+            await handleAbsen(token);
+            scanner.stop();
+          },
+          {
+            onDecodeError: () => {
+              // Ignore decode errors
+            },
+            preferredCamera: "environment",
+            highlightCodeOutlineColor: "rgb(65, 135, 179)",
+          }
+        );
+
+        scanner.start();
+        scannerRef.current = scanner;
+      } catch (error) {
+        console.error("Failed to initialize scanner:", error);
+        setMessage({
+          type: "error",
+          text: "Gagal membuka kamera. Pastikan izin kamera diberikan.",
+        });
+      }
+    };
+
+    initScanner();
 
     return () => {
-      qrScanner.stop();
+      if (scannerRef.current) {
+        scannerRef.current.stop();
+      }
     };
   }, [mounted]);
 
@@ -89,7 +104,7 @@ export default function AbsenKeluarPage() {
       if (!response.ok) {
         setMessage({
           type: "error",
-          text: data || "Absen gagal",
+          text: typeof data === "string" ? data : "Absen gagal",
         });
         return;
       }

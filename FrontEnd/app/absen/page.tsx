@@ -2,9 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Camera, AlertCircle, CheckCircle } from "lucide-react";
+import { ArrowLeft, Camera, AlertCircle, CheckCircle, Loader } from "lucide-react";
 
-export default function AbsenMasukPage() {
+declare global {
+  interface Window {
+    QrScanner: any;
+  }
+}
+
+export default function AbsenPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -15,32 +21,43 @@ export default function AbsenMasukPage() {
   } | null>(null);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [scanning, setScanning] = useState(false);
   const scannerRef = useRef<any>(null);
 
   useEffect(() => {
     setMounted(true);
     // Get user location
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        setLatitude(position.coords.latitude);
-        setLongitude(position.coords.longitude);
-      });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLatitude(position.coords.latitude);
+          setLongitude(position.coords.longitude);
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          setMessage({
+            type: "error",
+            text: "Tidak bisa mendapatkan lokasi. Pastikan GPS aktif.",
+          });
+        }
+      );
     }
   }, []);
 
   useEffect(() => {
-    if (!mounted || !videoRef.current) return;
+    if (!mounted || !videoRef.current || scanning) return;
 
     const initScanner = async () => {
       try {
+        // Dynamically import qr-scanner
         const QrScanner = (await import("qr-scanner")).default;
 
         const scanner = new QrScanner(
           videoRef.current,
           async (result: any) => {
             const token = result.data;
+            setScanning(true);
             await handleAbsen(token);
-            scanner.stop();
           },
           {
             onDecodeError: () => {
@@ -69,7 +86,7 @@ export default function AbsenMasukPage() {
         scannerRef.current.stop();
       }
     };
-  }, [mounted]);
+  }, [mounted, scanning]);
 
   const handleAbsen = async (token: string) => {
     if (!latitude || !longitude) {
@@ -77,6 +94,7 @@ export default function AbsenMasukPage() {
         type: "error",
         text: "Lokasi tidak ditemukan. Pastikan GPS aktif.",
       });
+      setScanning(false);
       return;
     }
 
@@ -106,22 +124,25 @@ export default function AbsenMasukPage() {
           type: "error",
           text: typeof data === "string" ? data : "Absen gagal",
         });
+        setScanning(false);
         return;
       }
 
       setMessage({
         type: "success",
-        text: "Absen masuk berhasil! ✓",
+        text: "Absen berhasil! ✓",
       });
 
       setTimeout(() => {
         router.push("/my-activity");
       }, 2000);
     } catch (error) {
+      console.error("Error:", error);
       setMessage({
         type: "error",
         text: "Terjadi kesalahan. Coba lagi.",
       });
+      setScanning(false);
     } finally {
       setLoading(false);
     }
@@ -145,7 +166,7 @@ export default function AbsenMasukPage() {
         >
           <ArrowLeft size={22} />
         </button>
-        <h1 className="text-3xl font-bold text-[#230d7d]">Absen Masuk</h1>
+        <h1 className="text-3xl font-bold text-[#230d7d]">Absen</h1>
       </div>
 
       {/* CAMERA CONTAINER */}
@@ -159,6 +180,12 @@ export default function AbsenMasukPage() {
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="w-64 h-64 border-4 border-[#4187b3] rounded-lg opacity-50"></div>
           </div>
+
+          {loading && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <Loader size={48} className="text-white animate-spin" />
+            </div>
+          )}
         </div>
       </div>
 

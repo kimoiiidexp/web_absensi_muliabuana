@@ -373,7 +373,7 @@ export default function MyActivityPage() {
                 <ActionCard
                   title="Rekap Absen"
                   icon={<School size={34} />}
-                  link="/rekap-absensi"
+                  link="/rekap-absensi-siswa"
                 />
 
                 <ActionCard
@@ -385,7 +385,7 @@ export default function MyActivityPage() {
                 <ActionCard
                   title="AutoScan"
                   icon={<ScanLine size={34} />}
-                  link="/autoscan"
+                  link="/absen"
                 />
               </>
             ) : (
@@ -399,7 +399,7 @@ export default function MyActivityPage() {
                 <ActionCard
                   title="Rekap Absen"
                   icon={<School size={34} />}
-                  link="/rekap-absensi"
+                  link="/rekap-absensi-siswa"
                 />
 
                 <ActionCard

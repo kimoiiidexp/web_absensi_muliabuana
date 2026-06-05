@@ -36,7 +36,7 @@ export default function AbsenKeluarPage() {
         const QrScanner = (await import("qr-scanner")).default;
 
         const scanner = new QrScanner(
-          videoRef.current,
+          videoRef.current as HTMLVideoElement,
           async (result: any) => {
             const token = result.data;
             await handleAbsen(token);

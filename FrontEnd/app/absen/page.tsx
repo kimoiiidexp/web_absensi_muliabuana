@@ -4,12 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Camera, AlertCircle, CheckCircle, Loader } from "lucide-react";
 
-declare global {
-  interface Window {
-    QrScanner: any;
-  }
-}
-
 export default function AbsenPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -49,11 +43,10 @@ export default function AbsenPage() {
 
     const initScanner = async () => {
       try {
-        // Dynamically import qr-scanner
         const QrScanner = (await import("qr-scanner")).default;
 
         const scanner = new QrScanner(
-          videoRef.current,
+          videoRef.current as HTMLVideoElement,
           async (result: any) => {
             const token = result.data;
             setScanning(true);

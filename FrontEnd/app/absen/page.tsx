@@ -41,63 +41,47 @@ export default function AbsenPage() {
   }, []);
 
   useEffect(() => {
-  if (!mounted || !videoRef.current || scanning) return;
+    if (!mounted || !videoRef.current || scanning) return;
 
-  const initScanner = async () => {
-    try {
-      console.log("navigator.mediaDevices =", navigator.mediaDevices);
-      console.log(
-        "getUserMedia =",
-        navigator.mediaDevices?.getUserMedia
-      );
+    const initScanner = async () => {
+      try {
+        const QrScanner = (await import("qr-scanner")).default;
 
-      const QrScanner = (await import("qr-scanner")).default;
+        const scanner = new QrScanner(
+          videoRef.current as HTMLVideoElement,
+          async (result: any) => {
+            const token = result.data;
+            setScanning(true);
+            await handleAbsen(token);
+          },
+          {
+            onDecodeError: () => {
+              // Ignore decode errors
+            },
+            preferredCamera: "environment",
+            highlightScanRegion: true,
+          }
+        );
 
-      const scanner = new QrScanner(
-        videoRef.current,
-        async (result: any) => {
-          const token = result.data;
+        scanner.start();
+        scannerRef.current = scanner;
+      } catch (error) {
+        console.error("Failed to initialize scanner:", error);
+        setMessage({
+          type: "error",
+          text: "Gagal membuka kamera. Pastikan izin kamera diberikan.",
+        });
+      }
+    };
 
-          setScanning(true);
+    initScanner();
 
-          await handleAbsen(token);
-        },
-        {
-          onDecodeError: () => {},
-          preferredCamera: "environment",
-          highlightScanRegion: true,
-        }
-      );
-
-      await scanner.start();
-
-      console.log("SCANNER STARTED");
-
-      scannerRef.current = scanner;
-    } catch (error) {
-      console.error("Failed to initialize scanner:", error);
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Gagal membuka kamera"
-      );
-
-      setMessage({
-        type: "error",
-        text: "Gagal membuka kamera. Pastikan izin kamera diberikan.",
-      });
-    }
-  };
-
-  initScanner();
-
-  return () => {
-    if (scannerRef.current) {
-      scannerRef.current.stop();
-    }
-  };
-}, [mounted, scanning]);
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.stop();
+      }
+    };
+  }, [mounted, scanning]);
 
 
 

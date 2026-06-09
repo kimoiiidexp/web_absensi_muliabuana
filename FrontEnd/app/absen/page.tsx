@@ -73,29 +73,29 @@ export default function AbsenPage() {
       console.log("VIDEO FOUND");
 
       scanner = new QrScanner(
-        videoRef.current,
-        async (result: any) => {
-          if (scanning) return;
+      videoRef.current,
+      async (result: any) => {
+    if (scanning) return;
 
-          console.log("QR DETECTED", result);
+    console.log("QR DETECTED", result);
 
-          setScanning(true);
+    const qrData =
+      typeof result === "string"
+        ? result
+        : result?.data || result;
 
-          const qrData =
-            typeof result === "string"
-              ? result
-              : result?.data || result;
+    console.log("QR CONTENT:", qrData);
 
-          console.log("QR CONTENT:", qrData);
-        },
+    setScanning(true);
 
-        {
-        preferredCamera: cameraFacing,
-        highlightScanRegion: true,
-        highlightCodeOutline: true,
-      }
-
-      );
+    await handleAbsen(qrData);
+  },
+  {
+    preferredCamera: cameraFacing,
+    highlightScanRegion: true,
+    highlightCodeOutline: true,
+  }
+);
       console.log("HTTPS?", window.location.protocol);
       console.log("mediaDevices", navigator.mediaDevices);
 

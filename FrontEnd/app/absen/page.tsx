@@ -94,7 +94,14 @@ export default function AbsenPage() {
     preferredCamera: cameraFacing,
     highlightScanRegion: true,
     highlightCodeOutline: true,
+
+    onDecodeError: (err: any) => {
+    console.log("DECODE ERROR", err);
+  },
+
   }
+
+  
 );
       console.log("HTTPS?", window.location.protocol);
       console.log("mediaDevices", navigator.mediaDevices);
@@ -238,7 +245,6 @@ export default function AbsenPage() {
   playsInline
   muted
   className="w-full h-full object-cover"
-  style={{ transform: "scaleX(-1)" }}
 />
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="w-64 h-64 border-4 border-[#4187b3] rounded-lg opacity-50"></div>

@@ -19,6 +19,8 @@ export default function AbsenPage() {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
   const scannerRef = useRef<any>(null);
+ const [cameraFacing, setCameraFacing] =
+  useState<"environment" | "user">("environment");
 
   useEffect(() => {
     setMounted(true);
@@ -84,17 +86,31 @@ export default function AbsenPage() {
               ? result
               : result?.data || result;
 
-          await handleAbsen(qrData);
+          console.log("QR CONTENT:", qrData);
         },
+
         {
-          preferredCamera: "environment",
-          highlightScanRegion: true,
-          highlightCodeOutline: true,
-        }
+        preferredCamera: cameraFacing,
+        highlightScanRegion: true,
+        highlightCodeOutline: true,
+      }
+
       );
       console.log("HTTPS?", window.location.protocol);
       console.log("mediaDevices", navigator.mediaDevices);
+
       await scanner.start();
+      
+      console.log(
+          "VIDEO SIZE:",
+          videoRef.current?.videoWidth,
+          videoRef.current?.videoHeight
+        );
+
+        console.log(
+          "READY STATE:",
+          videoRef.current?.readyState
+        );
 
       if (cancelled) {
         scanner.stop();
@@ -110,8 +126,11 @@ export default function AbsenPage() {
       );
 
       scannerRef.current = scanner;
-    } catch (err) {
-      console.error("SCANNER ERROR", err);
+    } catch (err: any) {
+  console.error("SCANNER ERROR", err);
+
+  console.error("NAME:", err?.name);
+  console.error("MESSAGE:", err?.message);
 
       setMessage({
         type: "error",
@@ -135,7 +154,7 @@ export default function AbsenPage() {
       scannerRef.current.destroy();
     }
   };
-}, [mounted, scanning]);
+}, [mounted, scanning, cameraFacing]);
 
 
   
@@ -232,6 +251,30 @@ export default function AbsenPage() {
           )}
         </div>
       </div>
+
+      <div className="flex justify-center mb-6">
+  <button
+    onClick={() =>
+      setCameraFacing((prev) =>
+        prev === "environment"
+          ? "user"
+          : "environment"
+      )
+    }
+    className="px-4 py-2 bg-[#4187b3] text-white rounded-lg"
+  >
+    {cameraFacing === "environment"
+      ? "Pakai Kamera Depan"
+      : "Pakai Kamera Belakang"}
+  </button>
+</div>
+
+<p className="text-center text-sm text-gray-500 mb-4">
+  Kamera aktif:
+  {cameraFacing === "environment"
+    ? " Belakang"
+    : " Depan"}
+</p>
 
       {/* MESSAGE */}
       {message && (

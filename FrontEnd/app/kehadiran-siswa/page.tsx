@@ -177,8 +177,13 @@ export default function KehadiranSiswaPage() {
       }
 
       if (laporanRes.ok) {
-        setLaporan(await laporanRes.json());
-      }
+  const data = await laporanRes.json();
+
+  console.log("LAPORAN RESPONSE =", data);
+  console.log("IS ARRAY =", Array.isArray(data));
+
+  setLaporan(Array.isArray(data) ? data : []);
+}
 
       await fetchSessions();
     },

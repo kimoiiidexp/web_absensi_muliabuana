@@ -23,6 +23,9 @@ type AbsensiRepo interface {
 	GetAbsensiByID(id uint) (*model.AbsensiSiswa, error)
 	GetLaporanDetail(sessionID uint) ([]model.LaporanResponse, error)
 	GetRiwayatBySiswa(siswaID uint) ([]RiwayatSiswa, error)
+	GetRekapByKelas(kelasID uint) ([]RekapSiswa, error)
+	GetAllSessions() ([]SessionDetail, error)
+	GetDashboardStats() (DashboardStats, error)
 }
 
 type absensiRepo struct {
@@ -55,6 +58,25 @@ type RiwayatSiswa struct {
 	Subject   string `json:"subject"`
 	Class     string `json:"class"`
 	GuruName  string `json:"guru_name"`
+}
+
+type RekapSiswa struct {
+	SiswaID   uint   `json:"siswa_id"`
+	Name      string `json:"name"`
+	Hadir     int    `json:"hadir"`
+	Izin      int    `json:"izin"`
+	Sakit     int    `json:"sakit"`
+	Alpa      int    `json:"alpa"`
+	Terlambat int    `json:"terlambat"`
+}
+
+type DashboardStats struct {
+	TotalSiswa    int64 `json:"total_siswa"`
+	TotalGuru     int64 `json:"total_guru"`
+	TotalKelas    int64 `json:"total_kelas"`
+	TotalSessions int64 `json:"total_sessions"`
+	TotalHadir    int64 `json:"total_hadir"`
+	TotalAlpa     int64 `json:"total_alpa"`
 }
 
 func NewAbsensiRepo(db *gorm.DB) AbsensiRepo {
@@ -266,4 +288,65 @@ func (r *absensiRepo) GetRiwayatBySiswa(siswaID uint) ([]RiwayatSiswa, error) {
 		Order("a.waktu_absen DESC").
 		Scan(&result).Error
 	return result, err
+}
+
+func (r *absensiRepo) GetRekapByKelas(kelasID uint) ([]RekapSiswa, error) {
+	var result []RekapSiswa
+	err := r.db.Table("siswa_kelas sk").
+		Select(`
+			sk.siswa_id,
+			u.name,
+			SUM(CASE WHEN a.status = 'hadir' THEN 1 ELSE 0 END) as hadir,
+			SUM(CASE WHEN a.status = 'izin' THEN 1 ELSE 0 END) as izin,
+			SUM(CASE WHEN a.status = 'sakit' THEN 1 ELSE 0 END) as sakit,
+			SUM(CASE WHEN a.status = 'alpa' THEN 1 ELSE 0 END) as alpa,
+			SUM(CASE WHEN a.status = 'terlambat' THEN 1 ELSE 0 END) as terlambat
+		`).
+		Joins("JOIN users u ON u.id = sk.siswa_id").
+		Joins("LEFT JOIN absensi_siswa a ON a.siswa_id = sk.siswa_id").
+		Joins("LEFT JOIN absensi_session s ON s.id = a.session_id AND s.kelas_id = ?", kelasID).
+		Where("sk.kelas_id = ?", kelasID).
+		Group("sk.siswa_id, u.name").
+		Order("u.name ASC").
+		Scan(&result).Error
+	return result, err
+}
+
+func (r *absensiRepo) GetAllSessions() ([]SessionDetail, error) {
+	var result []SessionDetail
+	err := r.db.Table("absensi_session s").
+		Select(`
+			s.id,
+			s.guru_id,
+			s.kelas_id,
+			s.mapel_id,
+			k.name as kelas_name,
+			j.name as jurusan_name,
+			mp.name as mapel_name,
+			s.qr_token,
+			DATE_FORMAT(s.expired_at, '%Y-%m-%dT%H:%i:%sZ') as expired_at,
+			s.latitude,
+			s.longitude,
+			s.radius_meter,
+			s.is_closed,
+			DATE_FORMAT(s.created_at, '%Y-%m-%dT%H:%i:%sZ') as created_at
+		`).
+		Joins("JOIN kelas k ON k.id = s.kelas_id").
+		Joins("LEFT JOIN jurusan j ON j.id = k.jurusan_id").
+		Joins("JOIN mata_pelajaran mp ON mp.id = s.mapel_id").
+		Order("s.created_at DESC").
+		Limit(50).
+		Scan(&result).Error
+	return result, err
+}
+
+func (r *absensiRepo) GetDashboardStats() (DashboardStats, error) {
+	var stats DashboardStats
+	r.db.Table("users").Where("role = ?", "siswa").Count(&stats.TotalSiswa)
+	r.db.Table("users").Where("role = ?", "guru").Count(&stats.TotalGuru)
+	r.db.Table("kelas").Count(&stats.TotalKelas)
+	r.db.Table("absensi_session").Count(&stats.TotalSessions)
+	r.db.Table("absensi_siswa").Where("status = ?", "hadir").Count(&stats.TotalHadir)
+	r.db.Table("absensi_siswa").Where("status = ?", "alpa").Count(&stats.TotalAlpa)
+	return stats, nil
 }

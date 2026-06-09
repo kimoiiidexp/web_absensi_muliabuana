@@ -16,11 +16,13 @@ func NewKelasHandler(s *service.KelasService) *KelasHandler {
 
 func (h *KelasHandler) Create(c *fiber.Ctx) error {
 	var body struct {
-		Name      string
-		JurusanID uint
+		Name      string `json:"name"`
+		JurusanID uint   `json:"jurusan_id"`
 	}
 
-	c.BodyParser(&body)
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "invalid request"})
+	}
 
 	err := h.service.Create(body.Name, body.JurusanID)
 	if err != nil {

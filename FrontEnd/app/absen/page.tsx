@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Camera, AlertCircle, CheckCircle, Loader } from "lucide-react";
+import { apiUrl } from "@/lib/api";
+import AppShell from "@/components/AppShell";
 
 export default function AbsenPage() {
   const router = useRouter();
@@ -95,7 +97,7 @@ export default function AbsenPage() {
     try {
       const authToken = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_ORIGIN}/api/siswa/absen`,
+        apiUrl("/api/siswa/absen"),
         {
           method: "POST",
           headers: {
@@ -150,18 +152,7 @@ export default function AbsenPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#eef5fb] p-8">
-      {/* HEADER */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={() => router.back()}
-          className="w-[48px] h-[48px] rounded-xl bg-white flex items-center justify-center shadow-sm border border-[#4187b3]/10 text-[#230d7d] hover:shadow-md transition"
-        >
-          <ArrowLeft size={22} />
-        </button>
-        <h1 className="text-3xl font-bold text-[#230d7d]">Absen</h1>
-      </div>
-
+    <AppShell title="Scan QR Absensi">
       {/* CAMERA CONTAINER */}
       <div className="bg-white rounded-[20px] shadow-md overflow-hidden border border-[#4187b3]/10 mb-8">
         <div className="relative w-full aspect-square bg-black">
@@ -217,7 +208,7 @@ export default function AbsenPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
 

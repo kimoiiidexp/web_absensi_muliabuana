@@ -38,7 +38,7 @@ func (s *AbsensiService) CreateSession(guruID, kelasID, mapelID uint, lat, lon f
 		KelasID:     kelasID,
 		MapelID:     mapelID,
 		QRToken:     token,
-		ExpiredAt:   time.Now().Add(1 * time.Minute),
+		ExpiredAt:   time.Now().Add(10 * time.Minute),
 		Latitude:    lat,
 		Longitude:   lon,
 		RadiusMeter: 100,
@@ -284,6 +284,18 @@ func (s *AbsensiService) GetSummary(sessionID uint, userID uint) (map[string]int
 	}
 
 	return result, nil
+}
+
+func (s *AbsensiService) GetRekapByKelas(kelasID uint) ([]repository.RekapSiswa, error) {
+	return s.repo.GetRekapByKelas(kelasID)
+}
+
+func (s *AbsensiService) GetAllSessions() ([]repository.SessionDetail, error) {
+	return s.repo.GetAllSessions()
+}
+
+func (s *AbsensiService) GetDashboardStats() (repository.DashboardStats, error) {
+	return s.repo.GetDashboardStats()
 }
 
 func (s *AbsensiService) validateGuruOwner(sessionID uint, userID uint) error {

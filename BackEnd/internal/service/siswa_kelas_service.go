@@ -23,3 +23,11 @@ func (s *SiswaKelasService) Assign(siswaID, kelasID uint) error {
 func (s *SiswaKelasService) GetByKelas(kelasID uint) ([]repository.SiswaWithUser, error) {
 	return s.repo.GetByKelasWithUser(kelasID)
 }
+
+func (s *SiswaKelasService) GetKelasInfoBySiswa(siswaID uint) (*repository.SiswaKelasInfo, error) {
+	return s.repo.GetKelasInfoBySiswa(siswaID)
+}
+
+func (s *SiswaKelasService) GetAllAssignments() ([]repository.SiswaKelasDetail, error) {
+	return s.repo.FindAllWithDetails()
+}

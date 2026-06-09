@@ -19,6 +19,7 @@ func SetupRoutes(
 	invitationHandler *handler.InvitationHandler,
 	absensiHandler *handler.AbsensiHandler,
 	catatanHandler *handler.CatatanSiswaHandler,
+	adminHandler *handler.AdminHandler,
 ) {
 
 	// ========================
@@ -26,6 +27,8 @@ func SetupRoutes(
 	// ========================
 	app.Post("/register", auth.Register)
 	app.Post("/login", auth.Login)
+	app.Get("/invite/validate", invitationHandler.Validate)
+	app.Post("/invite/register", invitationHandler.Register)
 
 	// ========================
 	// PROTECTED
@@ -40,62 +43,47 @@ func SetupRoutes(
 	// ========================
 	guru := api.Group("/guru", middleware.RoleMiddleware("guru"))
 
-	guru.Get("/", func(c *fiber.Ctx) error {
-		return c.JSON("hello guru")
-	})
-
 	guru.Get("/mapel-kelas", guruMapelKelasHandler.GetMy)
-	guru.Get("/students", siswaKelasHandler.GetByKelas) // Get students by class for teacher
-
-	// ========================
-	// ROLE: ADMIN
-	// ========================
-	admin := api.Group("/admin", middleware.RoleMiddleware("admin"))
-
-	admin.Get("/", func(c *fiber.Ctx) error {
-		return c.JSON("hello admin")
-	})
-
-	// CRUD ADMIN
-	admin.Post("/jurusan", jurusanHandler.Create)
-	admin.Get("/jurusan", jurusanHandler.GetAll)
-
-	admin.Post("/kelas", kelasHandler.Create)
-	admin.Get("/kelas", kelasHandler.GetAll)
-
-	admin.Post("/mapel", mapelHandler.Create)
-	admin.Get("/mapel", mapelHandler.GetAll)
-
-	admin.Post("/assign-siswa", siswaKelasHandler.Assign)
-
-	admin.Post("/assign-guru", guruMapelKelasHandler.Assign) // ✅ tambah
-
-	guru.Get("/mapel-kelas", guruMapelKelasHandler.GetMy)
-
+	guru.Get("/students", siswaKelasHandler.GetByKelas)
 	guru.Post("/absen", absensiGuruHandler.Absen)
 	guru.Get("/cek-absen", absensiGuruHandler.CekAbsen)
-
-	// ADMIN ONLY
-	admin.Post("/invite-guru", invitationHandler.Invite)
-
-	// PUBLIC
-	app.Get("/invite/validate", invitationHandler.Validate)
-	app.Post("/invite/register", invitationHandler.Register)
-
-	// GURU
 	guru.Post("/create-session", absensiHandler.CreateSession)
 	guru.Get("/sessions", absensiHandler.GetMySessions)
 	guru.Post("/session/:id/generate-alpa", absensiHandler.GenerateAlpa)
 	guru.Get("/session/:id/laporan", absensiHandler.GetLaporan)
 	guru.Patch("/absensi/:id", absensiHandler.UpdateStatus)
 	guru.Get("/session/:id/summary", absensiHandler.GetSummary)
-
-	// GURU - CATATAN SISWA
+	guru.Get("/rekap-absensi", absensiHandler.GetRekapGuru)
 	guru.Post("/catatan", catatanHandler.SaveCatatan)
 	guru.Get("/catatan", catatanHandler.GetCatatan)
 
-	// MURID
+	// ========================
+	// ROLE: ADMIN
+	// ========================
+	admin := api.Group("/admin", middleware.RoleMiddleware("admin"))
+
+	admin.Get("/dashboard", adminHandler.GetDashboard)
+	admin.Get("/users", adminHandler.GetUsers)
+	admin.Post("/users", adminHandler.CreateUser)
+	admin.Post("/jurusan", jurusanHandler.Create)
+	admin.Get("/jurusan", jurusanHandler.GetAll)
+	admin.Post("/kelas", kelasHandler.Create)
+	admin.Get("/kelas", kelasHandler.GetAll)
+	admin.Post("/mapel", mapelHandler.Create)
+	admin.Get("/mapel", mapelHandler.GetAll)
+	admin.Post("/assign-siswa", siswaKelasHandler.Assign)
+	admin.Post("/assign-guru", guruMapelKelasHandler.Assign)
+	admin.Get("/assignments/siswa", adminHandler.GetSiswaKelasAssignments)
+	admin.Get("/assignments/guru", adminHandler.GetGuruAssignments)
+	admin.Post("/invite-guru", invitationHandler.Invite)
+	admin.Get("/sessions", adminHandler.GetSessions)
+	admin.Get("/rekap/:kelas_id", adminHandler.GetRekapByKelas)
+
+	// ========================
+	// ROLE: SISWA
+	// ========================
 	siswa := api.Group("/siswa", middleware.RoleMiddleware("siswa"))
 	siswa.Post("/absen", absensiHandler.Absen)
 	siswa.Get("/riwayat", absensiHandler.GetRiwayatSiswa)
+	siswa.Get("/kelas", siswaKelasHandler.GetMyKelas)
 }

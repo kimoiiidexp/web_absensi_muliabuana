@@ -9,6 +9,7 @@ import (
 type UserRepository interface {
 	FindByEmail(email string) (*model.User, error)
 	FindByID(id uint) (*model.User, error)
+	FindByRole(role string) ([]model.User, error)
 	Create(user *model.User) error
 	UpdatePhone(id uint, phone string) error
 }
@@ -35,6 +36,12 @@ func (r *userRepository) FindByID(id uint) (*model.User, error) {
 	var user model.User
 	err := r.db.First(&user, id).Error
 	return &user, err
+}
+
+func (r *userRepository) FindByRole(role string) ([]model.User, error) {
+	var users []model.User
+	err := r.db.Where("role = ?", role).Order("name ASC").Find(&users).Error
+	return users, err
 }
 
 func (r *userRepository) UpdatePhone(id uint, phone string) error {

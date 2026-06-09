@@ -17,11 +17,13 @@ func NewSiswaKelasHandler(s *service.SiswaKelasService) *SiswaKelasHandler {
 
 func (h *SiswaKelasHandler) Assign(c *fiber.Ctx) error {
 	var body struct {
-		SiswaID uint
-		KelasID uint
+		SiswaID uint `json:"siswa_id"`
+		KelasID uint `json:"kelas_id"`
 	}
 
-	c.BodyParser(&body)
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "invalid request"})
+	}
 
 	err := h.service.Assign(body.SiswaID, body.KelasID)
 	if err != nil {
@@ -51,4 +53,13 @@ func (h *SiswaKelasHandler) GetByKelas(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(students)
+}
+
+func (h *SiswaKelasHandler) GetMyKelas(c *fiber.Ctx) error {
+	siswaID := c.Locals("user_id").(uint)
+	info, err := h.service.GetKelasInfoBySiswa(siswaID)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{"message": "belum terdaftar di kelas"})
+	}
+	return c.JSON([]interface{}{info})
 }

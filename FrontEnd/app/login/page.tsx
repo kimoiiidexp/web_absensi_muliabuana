@@ -22,19 +22,17 @@ export default function LoginPage() {
 
       const data = await res.json();
 
-     if (res.ok) {
-  localStorage.setItem("token", data.token);
-
-  localStorage.setItem("role", data.user.Role);
-  localStorage.setItem("name", data.user.Name);
-  localStorage.setItem("email", data.user.Email);
-  localStorage.setItem("phone", data.user.Phone || "");
-
-  router.push("/loading-screen");
-  
-} else {
-  alert(data.message || "Login gagal");
-}
+      if (res.ok) {
+        const user = data.user || {};
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", user.role || user.Role || "siswa");
+        localStorage.setItem("name", user.name || user.Name || "");
+        localStorage.setItem("email", user.email || user.Email || "");
+        localStorage.setItem("phone", user.phone || user.Phone || "");
+        router.push("/loading-screen");
+      } else {
+        alert(data.message || "Login gagal");
+      }
 
     } catch (err) {
       console.log(err);

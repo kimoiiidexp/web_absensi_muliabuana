@@ -16,7 +16,7 @@ func NewMapelHandler(s *service.MapelService) *MapelHandler {
 
 func (h *MapelHandler) Create(c *fiber.Ctx) error {
 	var body struct {
-		Name string
+		Name string `json:"name"`
 	}
 
 	if err := c.BodyParser(&body); err != nil {

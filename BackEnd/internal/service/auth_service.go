@@ -57,3 +57,18 @@ func (s *AuthService) UpdatePhone(
 func (s *AuthService) GetProfile(userID uint) (*model.User, error) {
 	return s.repo.FindByID(userID)
 }
+
+func (s *AuthService) GetUsersByRole(role string) ([]model.User, error) {
+	if role == "" {
+		var all []model.User
+		for _, r := range []string{"admin", "guru", "siswa"} {
+			users, err := s.repo.FindByRole(r)
+			if err != nil {
+				return nil, err
+			}
+			all = append(all, users...)
+		}
+		return all, nil
+	}
+	return s.repo.FindByRole(role)
+}

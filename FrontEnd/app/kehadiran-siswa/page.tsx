@@ -17,15 +17,16 @@ import {
   XCircle,
 } from "lucide-react";
 import { apiUrl } from "@/lib/api";
+import AppShell from "@/components/AppShell";
 
 interface GuruMapelKelas {
-  ID: number;
-  GuruID: number;
-  KelasID: number;
-  MapelID: number;
-  KelasName: string;
-  JurusanName: string;
-  MapelName: string;
+  id: number;
+  guru_id: number;
+  kelas_id: number;
+  mapel_id: number;
+  kelas_name: string;
+  jurusan_name: string;
+  mapel_name: string;
 }
 
 interface RawSession {
@@ -120,7 +121,7 @@ export default function KehadiranSiswaPage() {
   const [message, setMessage] = useState("");
 
   const selectedAssignment = useMemo(
-    () => assignments.find((item) => String(item.ID) === selectedAssignmentId),
+    () => assignments.find((item) => String(item.id) === selectedAssignmentId),
     [assignments, selectedAssignmentId]
   );
 
@@ -147,7 +148,7 @@ export default function KehadiranSiswaPage() {
     const data = (await res.json()) as GuruMapelKelas[];
     setAssignments(data || []);
     if (!selectedAssignmentId && data?.length) {
-      setSelectedAssignmentId(String(data[0].ID));
+      setSelectedAssignmentId(String(data[0].id));
     }
   }, [authHeaders, selectedAssignmentId]);
 
@@ -282,8 +283,8 @@ export default function KehadiranSiswaPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          kelas_id: selectedAssignment.KelasID,
-          mapel_id: selectedAssignment.MapelID,
+          kelas_id: selectedAssignment.kelas_id,
+          mapel_id: selectedAssignment.mapel_id,
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         }),
@@ -296,9 +297,9 @@ export default function KehadiranSiswaPage() {
       }
 
       const session = normalizeSession(data);
-      session.kelasName = selectedAssignment.KelasName;
-      session.jurusanName = selectedAssignment.JurusanName;
-      session.mapelName = selectedAssignment.MapelName;
+      session.kelasName = selectedAssignment.kelas_name;
+      session.jurusanName = selectedAssignment.jurusan_name;
+      session.mapelName = selectedAssignment.mapel_name;
 
       setActiveSession(session);
       setSummary(null);
@@ -311,6 +312,26 @@ export default function KehadiranSiswaPage() {
       setMessage("Gagal mengambil lokasi atau membuat QR");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const updateStatus = async (absensiId: number, status: string) => {
+    const headers = authHeaders();
+    if (!headers || !activeSession) return;
+    try {
+      const res = await fetch(apiUrl(`/api/guru/absensi/${absensiId}`), {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setMessage(typeof data === "string" ? data : "Gagal update status");
+        return;
+      }
+      await refreshSessionData(activeSession.id);
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -364,20 +385,11 @@ export default function KehadiranSiswaPage() {
   const canClose = Boolean(activeSession && isExpired && !activeSession.isClosed);
 
   return (
-    <div className="min-h-screen bg-[#eef5fb] p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => router.back()}
-            className="w-[48px] h-[48px] rounded-xl bg-white flex items-center justify-center shadow-sm border border-[#4187b3]/10 text-[#230d7d] hover:shadow-md transition"
-          >
-            <ArrowLeft size={22} />
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold text-[#230d7d]">Kehadiran Siswa</h1>
-            <p className="text-[#230d7d]/70 mt-1">Buat QR dinamis untuk absensi kelas</p>
-          </div>
-        </div>
+    <AppShell title="Kehadiran Siswa">
+      <div className="mb-6">
+        <p className="text-[#230d7d]/70">Buat QR dinamis untuk absensi kelas</p>
+      </div>
+      <div className="flex items-center justify-end mb-4">
         <button
           onClick={() => activeSession && refreshSessionData(activeSession.id)}
           disabled={!activeSession}
@@ -414,8 +426,8 @@ export default function KehadiranSiswaPage() {
                 <option value="">Belum ada mapping kelas</option>
               ) : (
                 assignments.map((item) => (
-                  <option key={item.ID} value={item.ID}>
-                    {item.KelasName} - {item.MapelName}
+                  <option key={item.id} value={item.id}>
+                    {item.kelas_name} - {item.mapel_name}
                   </option>
                 ))
               )}
@@ -423,9 +435,9 @@ export default function KehadiranSiswaPage() {
 
             {selectedAssignment && (
               <div className="mt-4 rounded-xl bg-[#eef5fb] p-4 text-sm text-[#230d7d]/80 space-y-2">
-                <p>Jurusan: {selectedAssignment.JurusanName || "-"}</p>
-                <p>Kelas: {selectedAssignment.KelasName}</p>
-                <p>Mapel: {selectedAssignment.MapelName}</p>
+                <p>Jurusan: {selectedAssignment.jurusan_name || "-"}</p>
+                <p>Kelas: {selectedAssignment.kelas_name}</p>
+                <p>Mapel: {selectedAssignment.mapel_name}</p>
               </div>
             )}
 
@@ -545,12 +557,13 @@ export default function KehadiranSiswaPage() {
                     <th className="py-3 px-4 text-left text-[#230d7d]">Nama</th>
                     <th className="py-3 px-4 text-left text-[#230d7d]">Waktu</th>
                     <th className="py-3 px-4 text-left text-[#230d7d]">Status</th>
+                    <th className="py-3 px-4 text-left text-[#230d7d]">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {laporan.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="py-10 text-center text-[#230d7d]/60">
+                      <td colSpan={4} className="py-10 text-center text-[#230d7d]/60">
                         Belum ada siswa yang absen.
                       </td>
                     </tr>
@@ -570,6 +583,23 @@ export default function KehadiranSiswaPage() {
                             {item.status}
                           </span>
                         </td>
+                        <td className="py-3 px-4">
+                          {!activeSession?.isClosed && item.status === "hadir" && (
+                            <select
+                              defaultValue=""
+                              onChange={(e) => {
+                                if (e.target.value) updateStatus(item.id, e.target.value);
+                                e.target.value = "";
+                              }}
+                              className="h-9 px-2 rounded-lg border border-[#4187b3]/20 text-sm text-[#230d7d]"
+                            >
+                              <option value="">Ubah</option>
+                              <option value="izin">Izin</option>
+                              <option value="sakit">Sakit</option>
+                              <option value="alpa">Alpa</option>
+                            </select>
+                          )}
+                        </td>
                       </tr>
                     ))
                   )}
@@ -579,7 +609,7 @@ export default function KehadiranSiswaPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
 

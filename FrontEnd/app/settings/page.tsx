@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Bell, Lock, LogOut, AlertCircle, CheckCircle } from "lucide-react";
+import { Bell, Lock, LogOut, AlertCircle, CheckCircle } from "lucide-react";
+import AppShell from "@/components/AppShell";
+import { authFetch, parseJson, logout } from "@/lib/auth";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -22,20 +24,9 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_ORIGIN}/api/profile`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setPhone(data.phone || "");
-      }
+      const data = await authFetch("/api/profile").then((r) => parseJson<{ phone: string }>(r));
+      setPhone(data.phone || "");
+      localStorage.setItem("phone", data.phone || "");
     } catch (error) {
       console.error("Error fetching settings:", error);
     }
@@ -50,24 +41,12 @@ export default function SettingsPage() {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_ORIGIN}/api/profile/phone`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ phone }),
-        }
-      );
-
-      if (response.ok) {
-        setMessage({ type: "success", text: "Nomor telepon berhasil diperbarui" });
-      } else {
-        setMessage({ type: "error", text: "Gagal memperbarui nomor telepon" });
-      }
+      await authFetch("/api/profile/phone", {
+        method: "PUT",
+        body: JSON.stringify({ phone }),
+      }).then((r) => parseJson(r));
+      localStorage.setItem("phone", phone);
+      setMessage({ type: "success", text: "Nomor telepon berhasil diperbarui" });
     } catch (error) {
       setMessage({ type: "error", text: "Terjadi kesalahan" });
     } finally {
@@ -76,10 +55,7 @@ export default function SettingsPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("name");
-    localStorage.removeItem("email");
+    logout();
     router.push("/login");
   };
 
@@ -92,18 +68,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#eef5fb] p-8">
-      {/* HEADER */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={() => router.back()}
-          className="w-[48px] h-[48px] rounded-xl bg-white flex items-center justify-center shadow-sm border border-[#4187b3]/10 text-[#230d7d] hover:shadow-md transition"
-        >
-          <ArrowLeft size={22} />
-        </button>
-        <h1 className="text-3xl font-bold text-[#230d7d]">Pengaturan</h1>
-      </div>
-
+    <AppShell title="Pengaturan">
       {/* MESSAGE */}
       {message && (
         <div
@@ -208,7 +173,7 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
 

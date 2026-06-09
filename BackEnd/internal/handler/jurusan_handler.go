@@ -16,10 +16,12 @@ func NewJurusanHandler(s *service.JurusanService) *JurusanHandler {
 
 func (h *JurusanHandler) Create(c *fiber.Ctx) error {
 	var body struct {
-		Name string
+		Name string `json:"name"`
 	}
 
-	c.BodyParser(&body)
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "invalid request"})
+	}
 
 	err := h.service.Create(body.Name)
 	if err != nil {

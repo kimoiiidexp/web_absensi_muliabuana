@@ -163,3 +163,19 @@ func (h *AbsensiHandler) GetSummary(c *fiber.Ctx) error {
 
 	return c.JSON(data)
 }
+
+func (h *AbsensiHandler) GetRekapGuru(c *fiber.Ctx) error {
+	kelasID := c.Query("kelas_id")
+	if kelasID == "" {
+		return c.Status(400).JSON(fiber.Map{"message": "kelas_id is required"})
+	}
+	var kid uint
+	if _, err := fmt.Sscanf(kelasID, "%d", &kid); err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "invalid kelas_id"})
+	}
+	data, err := h.service.GetRekapByKelas(kid)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"message": err.Error()})
+	}
+	return c.JSON(data)
+}

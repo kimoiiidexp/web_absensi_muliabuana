@@ -94,6 +94,13 @@ func Run() {
 	catatanService := service.NewCatatanSiswaService(catatanRepo)
 	catatanHandler := handler.NewCatatanSiswaHandler(catatanService)
 
+	adminHandler := handler.NewAdminHandler(
+		authService,
+		siswaKelasService,
+		guruMapelKelasService,
+		absensiService,
+	)
+
 	routes.SetupRoutes(
 		fiberApp,
 		authHandler,
@@ -106,6 +113,7 @@ func Run() {
 		invHandler,
 		absensiHandler,
 		catatanHandler,
+		adminHandler,
 	)
 
 	port := os.Getenv("PORT")

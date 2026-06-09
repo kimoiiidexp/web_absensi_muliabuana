@@ -25,7 +25,10 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 
 	var body req
 	if err := c.BodyParser(&body); err != nil {
-		return c.Status(400).JSON("invalid request")
+		return c.Status(400).JSON(fiber.Map{"message": "invalid request"})
+	}
+	if body.Role == "" {
+		body.Role = "siswa"
 	}
 
 	err := h.service.Register(body.Name, body.Email, body.Password, body.Role)
@@ -38,12 +41,14 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	type req struct {
-		Email    string
-		Password string
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	var body req
-	c.BodyParser(&body)
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "invalid request"})
+	}
 
 	user, err := h.service.Login(body.Email, body.Password)
 	if err != nil {
@@ -71,9 +76,7 @@ func (h *AuthHandler) UpdatePhone(c *fiber.Ctx) error {
 		})
 	}
 
-	// FIX USER ID
-	userID := c.Locals("userID")
-
+	userID := c.Locals("user_id")
 	id, ok := userID.(uint)
 	if !ok {
 		return c.Status(401).JSON(fiber.Map{

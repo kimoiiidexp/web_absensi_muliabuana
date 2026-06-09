@@ -41,47 +41,67 @@ export default function AbsenPage() {
   }, []);
 
   useEffect(() => {
-    if (!mounted || !videoRef.current || scanning) return;
+  if (!mounted || !videoRef.current || scanning) return;
 
-    const initScanner = async () => {
-      try {
-        const QrScanner = (await import("qr-scanner")).default;
+  const initScanner = async () => {
+    try {
+      console.log("navigator.mediaDevices =", navigator.mediaDevices);
+      console.log(
+        "getUserMedia =",
+        navigator.mediaDevices?.getUserMedia
+      );
 
-        const scanner = new QrScanner(
-          videoRef.current as HTMLVideoElement,
-          async (result: any) => {
-            const token = result.data;
-            setScanning(true);
-            await handleAbsen(token);
-          },
-          {
-            onDecodeError: () => {
-              // Ignore decode errors
-            },
-            preferredCamera: "environment",
-            highlightScanRegion: true,
-          }
-        );
+      const QrScanner = (await import("qr-scanner")).default;
 
-        scanner.start();
-        scannerRef.current = scanner;
-      } catch (error) {
-        console.error("Failed to initialize scanner:", error);
-        setMessage({
-          type: "error",
-          text: "Gagal membuka kamera. Pastikan izin kamera diberikan.",
-        });
-      }
-    };
+      const scanner = new QrScanner(
+        videoRef.current,
+        async (result: any) => {
+          const token = result.data;
 
-    initScanner();
+          setScanning(true);
 
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop();
-      }
-    };
-  }, [mounted, scanning]);
+          await handleAbsen(token);
+        },
+        {
+          onDecodeError: () => {},
+          preferredCamera: "environment",
+          highlightScanRegion: true,
+        }
+      );
+
+      await scanner.start();
+
+      console.log("SCANNER STARTED");
+
+      scannerRef.current = scanner;
+    } catch (error) {
+      console.error("Failed to initialize scanner:", error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Gagal membuka kamera"
+      );
+
+      setMessage({
+        type: "error",
+        text: "Gagal membuka kamera. Pastikan izin kamera diberikan.",
+      });
+    }
+  };
+
+  initScanner();
+
+  return () => {
+    if (scannerRef.current) {
+      scannerRef.current.stop();
+    }
+  };
+}, [mounted, scanning]);
+
+
+
+  
 
   const handleAbsen = async (token: string) => {
     if (!latitude || !longitude) {

@@ -47,24 +47,41 @@ export default function AbsenPage() {
       try {
         const QrScanner = (await import("qr-scanner")).default;
 
-        const scanner = new QrScanner(
-          videoRef.current as HTMLVideoElement,
-          async (result: any) => {
-            const token = result.data;
-            setScanning(true);
-            await handleAbsen(token);
-          },
-          {
-            onDecodeError: () => {
-              // Ignore decode errors
-            },
-            preferredCamera: "environment",
-            highlightScanRegion: true,
-          }
-        );
+       const scanner = new QrScanner(
+  videoRef.current as HTMLVideoElement,
+  async (result: any) => {
+    console.log("QR DETECTED =", result);
 
-        scanner.start();
-        scannerRef.current = scanner;
+    const token = result.data;
+
+    setScanning(true);
+
+    await handleAbsen(token);
+  },
+  {
+    onDecodeError: () => {},
+    preferredCamera: "environment",
+    highlightScanRegion: true,
+    highlightCodeOutline: true,
+  }
+);
+
+await scanner.start();
+
+console.log("SCANNER STARTED");
+
+console.log(
+  "VIDEO SIZE =",
+  videoRef.current?.videoWidth,
+  videoRef.current?.videoHeight
+);
+
+console.log(
+  "VIDEO READY =",
+  videoRef.current?.readyState
+);
+
+scannerRef.current = scanner;
       } catch (error) {
         console.error("Failed to initialize scanner:", error);
         setMessage({
@@ -161,10 +178,13 @@ export default function AbsenPage() {
       <div className="bg-white rounded-[20px] shadow-md overflow-hidden border border-[#4187b3]/10 mb-8">
         <div className="relative w-full aspect-square bg-black">
           <video
-            ref={videoRef}
-            className="w-full h-full object-cover"
-            style={{ transform: "scaleX(-1)" }}
-          />
+  ref={videoRef}
+  autoPlay
+  playsInline
+  muted
+  className="w-full h-full object-cover"
+  style={{ transform: "scaleX(-1)" }}
+/>
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="w-64 h-64 border-4 border-[#4187b3] rounded-lg opacity-50"></div>
           </div>

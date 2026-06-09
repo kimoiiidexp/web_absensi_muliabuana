@@ -41,11 +41,20 @@ export default function AbsenPage() {
   }, []);
 
   useEffect(() => {
+    console.log("mounted =", mounted);
+console.log("videoRef =", videoRef.current);
+console.log("scanning =", scanning);
     if (!mounted || !videoRef.current || scanning) return;
 
     const initScanner = async () => {
-      try {
-        const QrScanner = (await import("qr-scanner")).default;
+  try {
+
+    console.log("INIT SCANNER");
+
+    const QrScanner = (await import("qr-scanner")).default;
+
+    console.log("QR IMPORT SUCCESS");
+
 
        const scanner = new QrScanner(
   videoRef.current as HTMLVideoElement,

@@ -41,80 +41,107 @@ export default function AbsenPage() {
   }, []);
 
   useEffect(() => {
-    console.log("mounted =", mounted);
-console.log("videoRef =", videoRef.current);
-console.log("scanning =", scanning);
-    if (!mounted || !videoRef.current || scanning) return;
+  if (!mounted) return;
+  if (scanning) return;
 
-    const initScanner = async () => {
-  try {
+  let scanner: any = null;
+  let cancelled = false;
 
-    console.log("INIT SCANNER");
+  const initScanner = async () => {
+    try {
+      console.log("INIT SCANNER");
 
-    const QrScanner = (await import("qr-scanner")).default;
+      const QrScanner = (await import("qr-scanner")).default;
 
-    console.log("QR IMPORT SUCCESS");
+      console.log("QR IMPORT SUCCESS");
 
+      // tunggu video benar-benar ada di DOM
+      let retry = 0;
 
-       const scanner = new QrScanner(
-  videoRef.current as HTMLVideoElement,
-  async (result: any) => {
-    console.log("QR DETECTED =", result);
-
-    const token = result.data;
-
-    setScanning(true);
-
-    await handleAbsen(token);
-  },
-  {
-    onDecodeError: () => {},
-    preferredCamera: "environment",
-    highlightScanRegion: true,
-    highlightCodeOutline: true,
-  }
-);
-
-await scanner.start();
-
-console.log("SCANNER STARTED");
-
-console.log(
-  "VIDEO SIZE =",
-  videoRef.current?.videoWidth,
-  videoRef.current?.videoHeight
-);
-
-console.log(
-  "VIDEO READY =",
-  videoRef.current?.readyState
-);
-
-scannerRef.current = scanner;
-      } catch (error) {
-        console.error("Failed to initialize scanner:", error);
-        setMessage({
-          type: "error",
-          text: "Gagal membuka kamera. Pastikan izin kamera diberikan.",
-        });
+      while (!videoRef.current && retry < 20) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        retry++;
       }
-    };
 
-    initScanner();
-
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop();
+      if (!videoRef.current) {
+        console.error("VIDEO ELEMENT NOT FOUND");
+        return;
       }
-    };
-  }, [mounted, scanning]);
 
+      console.log("VIDEO FOUND");
+
+      scanner = new QrScanner(
+        videoRef.current,
+        async (result: any) => {
+          if (scanning) return;
+
+          console.log("QR DETECTED", result);
+
+          setScanning(true);
+
+          const qrData =
+            typeof result === "string"
+              ? result
+              : result?.data || result;
+
+          await handleAbsen(qrData);
+        },
+        {
+          preferredCamera: "environment",
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+        }
+      );
+      console.log("HTTPS?", window.location.protocol);
+      console.log("mediaDevices", navigator.mediaDevices);
+      await scanner.start();
+
+      if (cancelled) {
+        scanner.stop();
+        scanner.destroy();
+        return;
+      }
+
+      console.log("SCANNER STARTED");
+
+      console.log(
+        "STREAM:",
+        videoRef.current?.srcObject
+      );
+
+      scannerRef.current = scanner;
+    } catch (err) {
+      console.error("SCANNER ERROR", err);
+
+      setMessage({
+        type: "error",
+        text: "Tidak dapat mengakses kamera",
+      });
+    }
+  };
+
+  initScanner();
+
+  return () => {
+    cancelled = true;
+
+    if (scanner) {
+      scanner.stop();
+      scanner.destroy();
+    }
+
+    if (scannerRef.current) {
+      scannerRef.current.stop();
+      scannerRef.current.destroy();
+    }
+  };
+}, [mounted, scanning]);
 
 
   
 
   const handleAbsen = async (token: string) => {
-    if (!latitude || !longitude) {
+   if (latitude === null || longitude === null) {
       setMessage({
         type: "error",
         text: "Lokasi tidak ditemukan. Pastikan GPS aktif.",

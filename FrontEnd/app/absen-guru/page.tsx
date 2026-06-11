@@ -386,7 +386,7 @@ export default function AbsenGuruPage() {
 
         <div className="mt-10">
           <h1 className="text-[34px] font-bold text-[#111827]">
-            Selamat Pagi,
+            Selamat Bekerja,
           </h1>
 
           <h2 className="text-[34px] font-bold text-[#111827]">

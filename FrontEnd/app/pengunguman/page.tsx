@@ -8,7 +8,7 @@ import {
   Bell,
 } from "lucide-react";
 
-export default function PengungumanPage() {
+export default function PengumumanPage() {
   const router = useRouter();
 
   return (
@@ -90,7 +90,7 @@ export default function PengungumanPage() {
                 </p>
 
                 <h1 className="text-4xl font-bold text-[#111827]">
-                  Pengunguman
+                  Pengumuman
                 </h1>
               </div>
 
@@ -125,17 +125,17 @@ export default function PengungumanPage() {
           <div className="space-y-6">
 
             <AnnouncementCard
-              title="Pengunguman 1"
+              title="Pengumuman 1"
               desc="Jadwal kegiatan belajar mengajar minggu depan mengalami perubahan."
             />
 
             <AnnouncementCard
-              title="Pengunguman 2"
+              title="Pengumuman 2"
               desc="Seluruh siswa diwajibkan memakai atribut lengkap pada hari Senin."
             />
 
             <AnnouncementCard
-              title="Pengunguman 3"
+              title="Pengumuman 3"
               desc="Guru diminta melakukan validasi absensi sebelum pukul 16.00."
             />
 

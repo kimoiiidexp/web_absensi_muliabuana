@@ -170,7 +170,7 @@ export default function AbsenPage() {
    if (latitude === null || longitude === null) {
       setMessage({
         type: "error",
-        text: "Lokasi tidak ditemukan. Pastikan GPS aktif.",
+        text: "Lokasi tidak ditemukan.",
       });
       setScanning(false);
       return;

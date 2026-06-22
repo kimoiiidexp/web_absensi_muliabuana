@@ -12,7 +12,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-white">
-      <p className="text-[#230d7d] text-lg font-semibold">Membuka halaman login...</p>
+      <p className="text-[#230d7d] text-lg font-semibold">Membuka halaman...</p>
     </main>
   );
 }

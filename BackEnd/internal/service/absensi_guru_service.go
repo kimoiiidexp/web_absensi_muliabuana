@@ -19,8 +19,8 @@ func NewAbsensiGuruService(r repository.AbsensiGuruRepo) *AbsensiGuruService {
 
 func (s *AbsensiGuruService) Absen(guruID uint, lat, lon float64, fotoPath string) error {
 
-	const schoolLat = -6.341778
-	const schoolLon = 106.558526
+	const schoolLat = -6.34294
+	const schoolLon = 106.69268
 	const radius = 200
 
 	d := utils.CalculateDistance(lat, lon, schoolLat, schoolLon)

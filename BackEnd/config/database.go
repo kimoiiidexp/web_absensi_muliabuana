@@ -67,18 +67,19 @@ func buildDSN() (string, error) {
 		return "", fmt.Errorf("variable database kurang: %s", strings.Join(missing, ", "))
 	}
 
-	return (&driver.Config{
-		User:      user,
-		Passwd:    password,
-		Net:       "tcp",
-		Addr:      fmt.Sprintf("%s:%s", host, port),
-		DBName:    name,
-		ParseTime: true,
-		Loc:       time.Local,
-		Params: map[string]string{
-			"charset": "utf8mb4",
-		},
-	}).FormatDSN(), nil
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?parseTime=true",
+		user,
+		password,
+		host,
+		port,
+		name,
+	)
+
+	fmt.Println("DSN =", dsn)
+
+	return dsn, nil
+
 }
 
 func dsnFromURL(databaseURL string) (string, error) {

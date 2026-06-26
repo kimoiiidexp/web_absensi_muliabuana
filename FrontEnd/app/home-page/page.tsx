@@ -27,8 +27,8 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState("");
   
   // Geofencing Simulation State
-  const [latInput, setLatInput] = useState("-6.2382");
-  const [lngInput, setLngInput] = useState("106.7554");
+  const [latInput, setLatInput] = useState("-6.34294");
+  const [lngInput, setLngInput] = useState("106.69268");
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulationResult, setSimulationResult] = useState<{
     status: "success" | "outside" | "idle";

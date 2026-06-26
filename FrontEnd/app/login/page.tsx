@@ -99,7 +99,7 @@ export default function LoginPage() {
 
         {/* OUTLINE BUTTON */}
         <button className="h-[50px] border-2 border-[#4187b3] text-[#230d7d] rounded-[12px] text-[16px]">
-          Lupa Kata Sandi?
+          Lupa Kata Sandi? Hubungi Admin!
         </button>
 
         {/* LINK */}
